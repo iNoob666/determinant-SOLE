@@ -1,0 +1,3 @@
+/home/inoob/Desktop/Uni/cpp/project activities/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/inoob/Desktop/Uni/cpp/project activities/cmake-build-debug/CMakeFiles/project_activities.dir
+/home/inoob/Desktop/Uni/cpp/project activities/cmake-build-debug/CMakeFiles/edit_cache.dir

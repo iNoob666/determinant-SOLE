@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/project_activities.dir/main.cpp.o  -o project_activities 
