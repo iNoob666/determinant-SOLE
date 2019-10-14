@@ -40,17 +40,23 @@ int main() {
 
     fout.open("nvtr.txt");
 
-    for(size_t iz = 0; iz < z.size() - 1; ++iz) {
-        for (size_t iy = 0; iy < y.size() - 1; ++iy) {
-            for (size_t ix = 0; ix < x.size() - 1; ++ix) {
-                fout << ix + iy * x.size() + iz * x.size() * y.size() << ' '
-                << ix + iy * x.size() + iz * x.size() * y.size() + 1 << ' '
-                << ix + (iy + 1) * x.size() + iz * x.size() * y.size() << ' '
-                << ix + (iy + 1) * x.size() + iz * x.size() * y.size() + 1 << ' '
-                << ix + iy * x.size() + (iz + 1) * x.size() * y.size() << ' '
-                << ix + iy * x.size() + (iz + 1) * x.size() * y.size() + 1 << ' '
-                << ix + (iy + 1) * x.size() + (iz + 1) * x.size() * y.size() << ' '
-                << ix + (iy + 1) * x.size() + (iz + 1) * x.size() * y.size() + 1 << std::endl;
+    int xsize = x.size();
+    int ysize = y.size();
+    int zsize = z.size();
+    int tmp = 0;
+    for(size_t iz = 0; iz < zsize - 1; ++iz) {
+        tmp = iz * xsize * ysize;
+        for (size_t iy = 0; iy < ysize - 1; ++iy) {
+            tmp += iy * xsize;
+            for (size_t ix = 0; ix < xsize - 1; ++ix) {
+                fout << ix + tmp << ' '
+                << ix + tmp + 1 << ' '
+                << ix + xsize + tmp << ' '
+                << ix + xsize + tmp + 1 << ' '
+                << ix + tmp + xsize * ysize << ' '
+                << ix + tmp + xsize * ysize + 1 << ' '
+                << ix + xsize + xsize * ysize + tmp << ' '
+                << ix + xsize + xsize * ysize + tmp + 1 << std::endl;
             }
         }
     }
