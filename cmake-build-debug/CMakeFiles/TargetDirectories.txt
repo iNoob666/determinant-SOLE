@@ -1,3 +1,3 @@
-/home/inoob/Desktop/Uni/cpp/project activities/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/inoob/Desktop/Uni/cpp/project activities/cmake-build-debug/CMakeFiles/project_activities.dir
-/home/inoob/Desktop/Uni/cpp/project activities/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Admin/Desktop/Roman/Uni/cpp/determinant-SOLE/cmake-build-debug/CMakeFiles/project_activities.dir
+C:/Users/Admin/Desktop/Roman/Uni/cpp/determinant-SOLE/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Admin/Desktop/Roman/Uni/cpp/determinant-SOLE/cmake-build-debug/CMakeFiles/rebuild_cache.dir

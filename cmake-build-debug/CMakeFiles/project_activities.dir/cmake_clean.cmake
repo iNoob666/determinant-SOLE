@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/project_activities.dir/main.cpp.o"
-  "project_activities"
+  "CMakeFiles/project_activities.dir/main.cpp.obj"
+  "libproject_activities.dll.a"
+  "project_activities.exe"
+  "project_activities.exe.manifest"
   "project_activities.pdb"
 )
 

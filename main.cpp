@@ -55,9 +55,38 @@ std::vector<std::vector<double>> formnvtr(const std::vector<double >& x, const s
 }
 
 
+std::vector<std::vector<double>> formList(int xSize, int ySize, int zSize, const std::vector<std::vector<double>>& nvtr){
+    std::vector<std::vector<double>> listOfConnections;
+    int count = xSize * ySize * zSize;
+    for(size_t i = 0; i < count; ++i){
+        std::vector<double> a;
+        listOfConnections.push_back(a);
+    }
+
+    for(const auto& element : nvtr){
+        for(size_t i = 0; i < element.size(); ++i){
+            for(size_t j = 0; j < i; ++j){
+                listOfConnections[element[i]].push_back(element[j]);
+            }
+        }
+    }
+    for (auto & item : listOfConnections) {
+        std::sort(item.begin(), item.end());
+    }
+
+    for(auto & item : listOfConnections){
+        for(auto i = ++item.begin(); i < item.end(); ++i){
+            if(*i == *(i - 1)){
+                item.erase(i);
+            }
+        }
+    }
+    return listOfConnections;
+}
+
+
 int main() {
     std::ifstream fin("x.txt");
-
     std::vector<double> x, y, z;
     while(!fin.eof()){
         double tmp;
@@ -84,31 +113,8 @@ int main() {
 
     std::vector<std::vector<double>> nvtr = formnvtr(x, y, z);
 
-    std::vector<std::vector<double>> listOfConnections;
+    std::vector<std::vector<double>> listOfConnections = formList(x.size(), y.size(), z.size(), nvtr);
 
-    int count = x.size() * y.size() * z.size();
-    for(size_t i = 0; i < count; ++i){
-        std::vector<double> a;
-        listOfConnections.push_back(a);
-    }
-
-    for(const auto& element : nvtr){
-        for(size_t i = 0; i < element.size(); ++i){
-            for(size_t j = 0; j < i; ++j){
-                listOfConnections[element[i]].push_back(element[j]);
-            }
-        }
-    }
-    for (auto & item : listOfConnections) {
-        std::sort(item.begin(), item.end());
-    }
-    for(auto & item : listOfConnections){
-        for(auto i = ++item.begin(); i < item.end(); ++i){
-            if(*i == *(i - 1)){
-                item.erase(i);
-            }
-        }
-    }
 
 
     return 0;
