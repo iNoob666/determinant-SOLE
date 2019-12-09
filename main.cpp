@@ -115,7 +115,5 @@ int main() {
 
     std::vector<std::vector<double>> listOfConnections = formList(x.size(), y.size(), z.size(), nvtr);
 
-
-
     return 0;
 }
