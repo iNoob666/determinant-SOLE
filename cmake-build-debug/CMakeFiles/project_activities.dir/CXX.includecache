@@ -9,11 +9,11 @@
 C:/Users/Admin/Desktop/Roman/Uni/cpp/determinant-SOLE/main.cpp
 iostream
 -
+iomanip
+-
 fstream
 -
 vector
--
-algorithm
 -
 string
 -

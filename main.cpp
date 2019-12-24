@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -6,18 +7,15 @@
 using namespace std;
 
 
-int X_coef(int i)
-{
+int X_coef(int i){
     return (i % 2);
 }
 
-int Y_coef(int i)
-{
+int Y_coef(int i){
     return ((int)(i / 2)) % 2 ;
 }
 
-int Z_coef(int i)
-{
+int Z_coef(int i){
     return (int)(i / 4);
 }
 
@@ -67,9 +65,9 @@ std::vector<std::vector<double>> formnvtr(const std::vector<double >& x, const s
                      << ix + count + 1 << ' '
                      << ix + xsize + count << ' '
                      << ix + xsize + count + 1 << ' '
-                     <<ix + count + xsize * ysize << ' '
+                     << ix + count + xsize * ysize << ' '
                      << ix + count + xsize * ysize + 1 << ' '
-                     <<ix + xsize + xsize * ysize + count << ' '
+                     << ix + xsize + xsize * ysize + count << ' '
                      << ix + xsize + xsize * ysize + count + 1 << std::endl;
                 tmp.push_back(a);
                 a.clear();
@@ -82,9 +80,7 @@ std::vector<std::vector<double>> formnvtr(const std::vector<double >& x, const s
 }
 
 
-
-vector<vector<double>> locG(double koef, double x0, double x1, double y0, double y1, double z0, double z1) //локальная матрица жёсткости для конечного элемента
-{
+vector<vector<double>> locG(double koef, double x0, double x1, double y0, double y1, double z0, double z1){ //локальная матрица жёсткости для конечного элемента
     const int g[2][2] = {
             {1, -1},
             {-1, 1}
@@ -96,15 +92,15 @@ vector<vector<double>> locG(double koef, double x0, double x1, double y0, double
     double hx = x1 - x0;
     double hy = y1 - y0;
     double hz = z1 - z0;
+
     vector<vector<double>> G;
     G.resize(8);
-    for (int i = 0, size = G.size(); i < size; ++i)
+    int size = G.size();
+    for (int i = 0; i < size; ++i)
         G[i].resize(8);
 
-    for (int i = 0; i < 8; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
             G[i][j] = (koef/36)*((hy*hz/hx) * g[X_coef(i)][X_coef(j)] * m[Y_coef(i)][Y_coef(j)] * m[Z_coef(i)][Z_coef(j)] +
                                  (hx*hz/hy) * m[X_coef(i)][X_coef(j)] * g[Y_coef(i)][Y_coef(j)] * m[Z_coef(i)][Z_coef(j)]+
                                  (hx*hy/hz) * m[X_coef(i)][X_coef(j)] * m[Y_coef(i)][Y_coef(j)] * g[Z_coef(i)][Z_coef(j)]);
@@ -127,129 +123,41 @@ vector<vector<double>> locM(double koef, double x0, double x1, double y0, double
     for (int i = 0, size = M.size(); i < size; ++i)
         M[i].resize(8);
 
-    for (int i = 0; i < 8; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
             M[i][j] = (koef/216) * ((hy*hz*hx) * m[X_coef(i)][X_coef(j)] * m[Y_coef(i)][Y_coef(j)] * m[Z_coef(i)][Z_coef(j)]);
         }
     }
     return M;
 }
 
-vector<vector<vector<double>>> GlobG3(double koef, const std::vector<double >& x, const std::vector<double >& y, const std::vector<double >& z) //глобальная матрица жёсткости для конечного элемента
-{
-    vector<vector<vector<double>>> G;
-    int number = 0;
-    double x0, x1, y0, y1, z0, z1;// 0 - предыдущий, 1 - текущий
-    x0 = x[0];
-    y0 = y[0];
-    z0 = z[0];
-    for (int i = 1; i < x.size(); i++)
-    {
-        for (int j = 1; j < y.size(); j++)
-        {
-            for (int k = 1; k < z.size(); k++)
-            {
-                G.emplace_back(locG(koef, x0, x[i], y0, y[j], z0, z[k]));
-                z0 = z[k];
-            }
-            z0 = z[0];
-            y0 = y[j];
-        }
-        y0 = y[0];
-        x0 = x[i];
-    }
-    return G;
-}
 
-vector<vector<double>> GlobalG(double koef, const std::vector<double >& x, const std::vector<double >& y, const std::vector<double >& z, const std::vector<std::vector<double>>& nvtr)
+vector<vector<double>> GlobalG(vector<double> koef, const vector<double >& x, const vector<double >& y, const vector<double >& z, const vector<vector<double>>& nvtr, vector<vector<double>> xyz)
 {
-    vector<vector<vector<double>>> G3 = GlobG3(koef, x, y, z);
     int _size = x.size()*y.size()*z.size();
+    int countOfElements = (x.size() - 1) * (y.size() - 1) * (z.size() - 1);
     vector<vector<double>> G;
-    for (int i = 0; i < _size; ++i) {
-        vector<double> tmp;
-        G.push_back(tmp);
-    }
-    for (auto &vect : G) {
-        for (int i = 0; i < _size; ++i) {
-            vect.push_back(0);
-        }
-    }
-    for (int numElem = 0; numElem < G3.size(); numElem++) {
-        for (int i = 0; i < G3[numElem].size(); i++) {
-            for (int j = 0; j < G3[numElem].size(); j++) {
-                if (G3[numElem][i][j] != 0) {
-                    G[nvtr[numElem][i]][nvtr[numElem][j]] += G3[numElem][i][j];
-                }
+    G.resize(_size);
+    for (int i = 0; i < _size; ++i)
+        G[i].resize(_size);
+
+    for(int k = 0; k < countOfElements; ++k) {
+        vector<vector<double>> tmp = locG(koef[k], xyz[nvtr[k][0]][0], xyz[nvtr[k][1]][0], xyz[nvtr[k][0]][1], xyz[nvtr[k][2]][1], xyz[nvtr[k][0]][2], xyz[nvtr[k][4]][2]);
+        for(int i = 0; i < 8; ++i) {
+            for(int j = 0; j < 8; ++j) {
+                G[nvtr[k][i]][nvtr[k][j]] += tmp[i][j];
             }
         }
     }
     return G;
 }
 
-vector<vector<vector<double>>> GlobM3(double koef, const std::vector<double >& x, const std::vector<double >& y, const std::vector<double >& z) //глобальная матрица жёсткости для конечного элемента
-{
-    vector<vector<vector<double>>> M;
-    double x0, x1, y0, y1, z0, z1;// 0 - предыдущий, 1 - текущий
-    x0 = x[0];
-    y0 = y[0];
-    z0 = z[0];
-    for (int i = 1; i < x.size(); i++)
-    {
-        for (int j = 1; j < y.size(); j++)
-        {
-            for (int k = 1; k < z.size(); k++)
-            {
-                M.emplace_back(locM(koef, x0, x[i], y0, y[j], z0, z[k]));
-                z0 = z[k];
-            }
-            z0 = z[0];
-            y0 = y[j];
-        }
-        y0 = y[0];
-        x0 = x[i];
-    }
-    return M;
-}
-vector<vector<double>> GlobalM(double koef, const std::vector<double >& x, const std::vector<double >& y, const std::vector<double >& z, const std::vector<std::vector<double>>& nvtr)
-{
-    vector<vector<vector<double>>> M3 = GlobM3(koef, x, y, z);
-    int _size = x.size()*y.size()*z.size();
-    vector<vector<double>> M;
-    for (int i = 0; i < _size; ++i) {
-        vector<double> tmp;
-        M.push_back(tmp);
-    }
-    for (auto &vect : M) {
-        for (int i = 0; i < _size; ++i) {
-            vect.push_back(0);
-        }
-    }
-    for (int numElem = 0; numElem < M3.size(); numElem++) {
-        for (int i = 0; i < M3[numElem].size(); i++) {
-            for (int j = 0; j < M3[numElem].size(); j++) {
-                if (M3[numElem][i][j] != 0) {
-                    M[nvtr[numElem][i]][nvtr[numElem][j]] += M3[numElem][i][j];
-                }
-            }
-        }
-    }
-    return M;
-}
-
-double f(int x, int y, int z)
-{
-    return x*x + y*y + z*z;
-}
 
 vector<double> MultMatrix(vector<vector<double>> matrix, vector<double> vector1)
 {
     vector<double> out;
     out.resize(8);
-    for (int ix = 0; ix < 8; ix++)
-    {
+    for (int ix = 0; ix < 8; ix++) {
         out[ix] = 0;
         for (int jx = 0; jx < 8; jx++)
             out[ix] += matrix[ix][jx] * vector1[jx];
@@ -257,42 +165,130 @@ vector<double> MultMatrix(vector<vector<double>> matrix, vector<double> vector1)
     return out;
 }
 
-vector<double> GlobF(double koef, vector<double> x, vector<double> y, vector<double> z, const vector<vector<double>>& nvtr, vector<vector<double>> xyz)
-{
-    vector<double> F;
-    vector<double> F1;
-    int size = x.size() * y.size() * z.size();
-    F.resize(size);
-    F1.resize(8);
-    for (int i = 0; i < size; i++)
-    {
-        F[i] = 0;
-    }
-    vector<vector<double>> lM;
-    lM.resize(8);
-    for (int i = 0, size = lM.size(); i < size; ++i)
-        lM[i].resize(8);
 
-    for (const auto& element : nvtr)
-    {
-        for (size_t i = 0; i < 8; ++i)
-        {
-            F1[i] = f(xyz[element[i]][0], xyz[element[i]][1], xyz[element[i]][2]);
+void SummMatrix(vector<vector<double>> &G, const vector<vector<double>> M){
+    int n = G.size();
+    for(int i = 0; i < n; ++i){
+        for(int j = 0; j < n; ++j){
+            G[i][j] += M[i][j];
         }
-        lM = locM(koef, xyz[element[0]][0], xyz[element[1]][0], xyz[element[0]][1], xyz[element[2]][1], xyz[element[0]][2], xyz[element[4]][2]);
-        F1 = MultMatrix(lM, F1);
-        for (size_t i = 0; i < element.size(); ++i)
-        {
-            F[element[i]] += F1[i];
+    }
+}
+
+
+double f(int x, int y, int z)
+{
+    return x*x + y*y + z*z;
+}
+
+
+vector<vector<double>> GlobalM(vector<double> koef, const vector<double >& x, const vector<double >& y, const vector<double >& z, const vector<vector<double>>& nvtr, vector<vector<double>> xyz)
+{
+    int _size = x.size()*y.size()*z.size();
+    int countOfElements = (x.size() - 1) * (y.size() - 1) * (z.size() - 1);
+
+    vector<vector<double>> M;
+    M.resize(_size);
+    for (int i = 0; i < _size; ++i)
+        M[i].resize(_size);
+
+    for(int k = 0; k < countOfElements; ++k) {
+        vector<vector<double>> tmp = locM(koef[k], xyz[nvtr[k][0]][0], xyz[nvtr[k][1]][0], xyz[nvtr[k][0]][1], xyz[nvtr[k][2]][1], xyz[nvtr[k][0]][2], xyz[nvtr[k][4]][2]);
+        for(int i = 0; i < 8; ++i) {
+            for(int j = 0; j < 8; ++j) {
+                M[nvtr[k][i]][nvtr[k][j]] += tmp[i][j];
+            }
+        }
+    }
+    return M;
+}
+
+
+vector<double> GlobalF(const vector<double >& x, const vector<double >& y, const vector<double >& z, const vector<vector<double>>& nvtr, vector<vector<double>> xyz){
+    int countOfElements = (x.size() - 1) * (y.size() - 1) * (z.size() - 1);
+    vector<double> F;
+    F.resize(x.size()*y.size()*z.size());
+
+    for(int k = 0; k < countOfElements; ++k) {
+        vector<vector<double>> tmp = locM(1, xyz[nvtr[k][0]][0], xyz[nvtr[k][1]][0], xyz[nvtr[k][0]][1], xyz[nvtr[k][2]][1], xyz[nvtr[k][0]][2], xyz[nvtr[k][4]][2]);
+        vector<double> F1;
+        F1.resize(8);
+        for (int i = 0; i < 8; ++i) {
+            F1[i] = f(xyz[nvtr[k][i]][0], xyz[nvtr[k][i]][1], xyz[nvtr[k][i]][2]);
+        }
+        F1 = MultMatrix(tmp, F1);
+        for (int i = 0; i < 8; ++i) {
+            F[nvtr[k][i]] += F1[i];
         }
     }
     return F;
 }
 
 
+void FirstBoundaryConditions(vector<vector<double>> &A, vector<double> &F, const vector<double> &kraev, const vector<vector<double>> &xyz)
+{
+    int size = A.size();
+    for (int i = 0; i < size; ++i) {
+        if (xyz[i][0] == xyz[0][0] || xyz[i][1] == xyz[0][1] || xyz[i][2] == xyz[0][2] || xyz[i][0] == xyz[size - 1][0] || xyz[i][1] == xyz[size - 1][1] || xyz[i][2] == xyz[size - 1][2]) {
+            for(int j = 0; j < size; ++j) {
+                if (i == j)
+                    A[i][j] = 1;
+                else
+                    A[i][j] = 0;
+                F[i] = kraev[i];
+            }
+        }
+    }
+}
+
+
+void luDecompose(vector<vector<double>> &A, vector<double> &F){
+    int n = A.size();
+
+    for(int i = 1; i < n; ++i){
+        A[i][0] /= A[0][0];
+    }
+
+    for(int i = 1; i < n; ++i){
+        for(int j = 1; j < n; ++j){
+            if(i > j){
+                double sum = 0;
+                for(int k = 0; k < j; k++){
+                    sum += A[i][k] * A[k][j];
+                }
+                A[i][j] = (A[i][j] - sum) / A[j][j];
+            } else{
+                double sum = 0;
+                for(int k = 0; k < i; k++){
+                    sum += A[i][k] * A[k][j];
+                }
+                A[i][j] -= sum;
+            }
+        }
+    }
+
+    for(int i = 1; i < n; ++i){
+        double sum = 0;
+        for(int k = 0; k < i; ++k){
+            sum += F[k] * A[i][k];
+        }
+        F[i] -= sum;
+    }
+
+    F[n - 1] /= A[n - 1][n - 1];
+    for(int i = n - 2; i >= 0; --i){
+        double sum = 0;
+        for(int k = i + 1; k < n; ++k){
+            sum += A[i][k] * F[k];
+        }
+        F[i] = (F[i] - sum) / A[i][i];
+    }
+}
+
+
 int main() {
     std::ifstream fin("x.txt");
-    std::vector<double> x, y, z;
+    std::vector<double> x, y, z, lyambda, gamma, kraev;
     while (!fin.eof()) {
         double tmp;
         fin >> tmp;
@@ -313,44 +309,40 @@ int main() {
         z.emplace_back(tmp);
     }
     fin.close();
-    int range = x.size()*y.size()*z.size();
+    fin.open("lyambda.txt");
+    while (!fin.eof()) {
+        double tmp;
+        fin >> tmp;
+        lyambda.push_back(tmp);
+    }
+    fin.close();
+    fin.open("gamma.txt");
+    while (!fin.eof()) {
+        double tmp;
+        fin >> tmp;
+        gamma.push_back(tmp);
+    }
+    fin.close();
 
     std::vector<std::vector<double>> xyz = formxyz(x, y, z);
-
     std::vector<std::vector<double>> nvtr = formnvtr(x, y, z);
+    vector<vector<double>> G = GlobalG(lyambda, x, y, z, nvtr, xyz);
+    vector<vector<double>> M = GlobalM(gamma, x, y, z, nvtr, xyz);
+    SummMatrix(G, M);
+    vector<double> F = GlobalF(x, y, z, nvtr, xyz);
+    FirstBoundaryConditions(G, F, kraev, xyz);
 
-    vector<vector<double>> G = GlobalG(216, x, y, z, nvtr);
-    setlocale(LC_ALL, "Russian");
-    printf_s("Матрица жёсткости:\n");
-    for (int i = 0; i < range; i++)
-    {
-        for (int j = 0; j < range; j++)
-        {
-            printf_s("%3.0lf ", G[i][j]);
+    luDecompose(G, F);
+    for(auto &vect : G){
+        for(auto &elem : vect){
+            cout << fixed << elem << ' ';
         }
-        printf_s("\n");
+        cout << endl;
     }
-    printf_s("\n");
-
-    vector<vector<double>> M = GlobalM(216, x, y, z, nvtr);
-    printf_s("Матрица массы:\n");
-    for (int i = 0; i < range; i++)
-    {
-        for (int j = 0; j < range; j++)
-        {
-            printf_s("%3.0lf ", M[i][j]);
-        }
-        printf_s("\n");
+    cout << endl;
+    for(auto &elem : F){
+        cout << fixed << elem << endl;
     }
-    printf_s("\n");
-
-    vector<double> F = GlobF(1, x, y, z, nvtr, xyz);
-    for (int j = 0; j < range; j++)
-    {
-        printf_s("%3.7lf ", F[j]);
-    }
-    printf_s("\n");
-
     _getch();
     return 0;
 }
