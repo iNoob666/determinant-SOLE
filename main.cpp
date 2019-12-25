@@ -2,8 +2,8 @@
 #include <iomanip>
 #include <fstream>
 #include <vector>
-#include <string>
-#include <conio.h>
+#include <map>
+
 using namespace std;
 
 
@@ -19,7 +19,7 @@ int Z_coef(int i){
     return (int)(i / 4);
 }
 
-std::vector<std::vector<double>> formxyz(const std::vector<double >& x, const std::vector<double >& y, const std::vector<double >& z) {
+std::vector<std::vector<double>> formxyz(const vector<double >& x, const vector<double >& y, const vector<double >& z) {
     std::ofstream fout("xyz.txt");
     std::vector<std::vector<double>> tmp;
     int count = 0;
@@ -39,7 +39,7 @@ std::vector<std::vector<double>> formxyz(const std::vector<double >& x, const st
     return tmp;
 }
 
-std::vector<std::vector<double>> formnvtr(const std::vector<double >& x, const std::vector<double >& y, const std::vector<double >& z) {
+std::vector<std::vector<double>> formnvtr(const vector<double >& x, const vector<double >& y, const vector<double >& z) {
     std::vector<std::vector<double>> tmp;
     std::vector<double> a;
     std::ofstream fout("nvtr.txt");
@@ -225,7 +225,7 @@ vector<double> GlobalF(const vector<double >& x, const vector<double >& y, const
 }
 
 
-void FirstBoundaryConditions(vector<vector<double>> &A, vector<double> &F, const vector<double> &kraev, const vector<vector<double>> &xyz)
+void FirstBoundaryConditions(vector<vector<double>> &A, vector<double> &F, map<int, double> &kraev, const vector<vector<double>> &xyz)
 {
     int size = A.size();
     for (int i = 0; i < size; ++i) {
@@ -235,7 +235,8 @@ void FirstBoundaryConditions(vector<vector<double>> &A, vector<double> &F, const
                     A[i][j] = 1;
                 else
                     A[i][j] = 0;
-                F[i] = kraev[i];
+                if(kraev.find(i) != kraev.end())
+                    F[i] = kraev[i];
             }
         }
     }
@@ -287,8 +288,9 @@ void luDecompose(vector<vector<double>> &A, vector<double> &F){
 
 
 int main() {
-    std::ifstream fin("x.txt");
-    std::vector<double> x, y, z, lyambda, gamma, kraev;
+    ifstream fin("x.txt");
+    vector<double> x, y, z, lyambda, gamma;
+    map<int, double> kraev;
     while (!fin.eof()) {
         double tmp;
         fin >> tmp;
@@ -323,6 +325,13 @@ int main() {
         gamma.push_back(tmp);
     }
     fin.close();
+    fin.open("kraev.txt");
+    while (!fin.eof()) {
+        pair<int, double> tmp;
+        fin >> tmp.first >> tmp.second;
+        kraev.insert(tmp);
+    }
+    fin.close();
 
     std::vector<std::vector<double>> xyz = formxyz(x, y, z);
     std::vector<std::vector<double>> nvtr = formnvtr(x, y, z);
@@ -343,6 +352,6 @@ int main() {
     for(auto &elem : F){
         cout << fixed << elem << endl;
     }
-    _getch();
+    system("pause");
     return 0;
 }
