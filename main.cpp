@@ -336,12 +336,38 @@ int main() {
     }
     fin.close();
 
+    int n = (x.size() - 1) * (y.size() - 1) * (z.size() - 1);
+    if(lyambda.size() == 1){
+        for(int i = 1; i < n; ++i){
+            lyambda.push_back(lyambda[0]);
+        }
+    }
+    if(gamma.size() == 1){
+        for(int i = 1; i < n; ++i){
+            gamma.push_back(gamma[0]);
+        }
+    }
+
     std::vector<std::vector<double>> xyz = formxyz(x, y, z);
     std::vector<std::vector<double>> nvtr = formnvtr(x, y, z);
     vector<vector<double>> G = GlobalG(lyambda, x, y, z, nvtr, xyz);
     vector<vector<double>> M = GlobalM(gamma, x, y, z, nvtr, xyz);
     SummMatrix(G, M);
+
+    for(auto &vect : G){
+        for(auto &elem : vect){
+            cout << fixed << elem << ' ';
+        }
+        cout << endl;
+    }
+    cout << endl;
+
     vector<double> F = GlobalF(x, y, z, nvtr, xyz);
+
+    for(auto &elem : F){
+        cout << fixed << elem << endl;
+    }
+    cout << endl;
 
     FirstBoundaryConditions(G, F, kraev, xyz);
 
@@ -350,6 +376,5 @@ int main() {
     for(auto &elem : F){
         cout << fixed << elem << endl;
     }
-    system("pause");
     return 0;
 }
