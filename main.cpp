@@ -7,6 +7,12 @@
 using namespace std;
 
 
+double f(int x, int y, int z)
+{
+    return x*x + y*y + z*z;
+}
+
+
 int X_coef(int i){
     return (i % 2);
 }
@@ -176,12 +182,6 @@ void SummMatrix(vector<vector<double>> &G, const vector<vector<double>> M){
 }
 
 
-double f(int x, int y, int z)
-{
-    return x*x + y*y + z*z;
-}
-
-
 vector<vector<double>> GlobalM(vector<double> koef, const vector<double >& x, const vector<double >& y, const vector<double >& z, const vector<vector<double>>& nvtr, vector<vector<double>> xyz)
 {
     int _size = x.size()*y.size()*z.size();
@@ -230,13 +230,14 @@ void FirstBoundaryConditions(vector<vector<double>> &A, vector<double> &F, map<i
     int size = A.size();
     for (int i = 0; i < size; ++i) {
         if (xyz[i][0] == xyz[0][0] || xyz[i][1] == xyz[0][1] || xyz[i][2] == xyz[0][2] || xyz[i][0] == xyz[size - 1][0] || xyz[i][1] == xyz[size - 1][1] || xyz[i][2] == xyz[size - 1][2]) {
-            for(int j = 0; j < size; ++j) {
-                if (i == j)
-                    A[i][j] = 1;
-                else
-                    A[i][j] = 0;
-                if(kraev.find(i) != kraev.end())
-                    F[i] = kraev[i];
+            if(kraev.find(i) != kraev.end()) {
+                F[i] = kraev[i];
+                for (int j = 0; j < size; ++j) {
+                    if (i == j)
+                        A[i][j] = 1;
+                    else
+                        A[i][j] = 0;
+                }
             }
         }
     }
@@ -326,10 +327,12 @@ int main() {
     }
     fin.close();
     fin.open("kraev.txt");
-    while (!fin.eof()) {
-        pair<int, double> tmp;
-        fin >> tmp.first >> tmp.second;
-        kraev.insert(tmp);
+    if(fin.peek() != EOF) {
+        while (!fin.eof()) {
+            pair<int, double> tmp;
+            fin >> tmp.first >> tmp.second;
+            kraev.insert(tmp);
+        }
     }
     fin.close();
 
@@ -339,16 +342,11 @@ int main() {
     vector<vector<double>> M = GlobalM(gamma, x, y, z, nvtr, xyz);
     SummMatrix(G, M);
     vector<double> F = GlobalF(x, y, z, nvtr, xyz);
+
     FirstBoundaryConditions(G, F, kraev, xyz);
 
     luDecompose(G, F);
-    for(auto &vect : G){
-        for(auto &elem : vect){
-            cout << fixed << elem << ' ';
-        }
-        cout << endl;
-    }
-    cout << endl;
+
     for(auto &elem : F){
         cout << fixed << elem << endl;
     }
