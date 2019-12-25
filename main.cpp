@@ -353,21 +353,7 @@ int main() {
     vector<vector<double>> G = GlobalG(lyambda, x, y, z, nvtr, xyz);
     vector<vector<double>> M = GlobalM(gamma, x, y, z, nvtr, xyz);
     SummMatrix(G, M);
-
-    for(auto &vect : G){
-        for(auto &elem : vect){
-            cout << fixed << elem << ' ';
-        }
-        cout << endl;
-    }
-    cout << endl;
-
     vector<double> F = GlobalF(x, y, z, nvtr, xyz);
-
-    for(auto &elem : F){
-        cout << fixed << elem << endl;
-    }
-    cout << endl;
 
     FirstBoundaryConditions(G, F, kraev, xyz);
 
