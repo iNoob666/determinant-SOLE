@@ -4,14 +4,19 @@
 #include <vector>
 #include <map>
 
+double fabs(double &d);
+
 using namespace std;
 
 
-double f(int x, int y, int z)
+double f(int x, int y, int z, int t)
 {
-    return x*x + y*y + z*z;
+    return 0;
 }
 
+double u(int x, int y, int z, double t){
+    return x;
+}
 
 int X_coef(int i){
     return (i % 2);
@@ -159,26 +164,40 @@ vector<vector<double>> GlobalG(vector<double> koef, const vector<double >& x, co
 }
 
 
-vector<double> MultMatrix(vector<vector<double>> matrix, vector<double> vector1)
+vector<double> MultMatrix(vector<vector<double>> matrix, vector<double> vect)
 {
-    vector<double> out;
-    out.resize(8);
-    for (int ix = 0; ix < 8; ix++) {
-        out[ix] = 0;
-        for (int jx = 0; jx < 8; jx++)
-            out[ix] += matrix[ix][jx] * vector1[jx];
+    if(matrix.size() == vect.size()) {
+        vector<double> out;
+        out.resize(matrix.size());
+        for (int ix = 0; ix < matrix.size(); ix++) {
+            out[ix] = 0;
+            for (int jx = 0; jx < matrix.size(); jx++)
+                out[ix] += matrix[ix][jx] * vect[jx];
+        }
+        return out;
     }
-    return out;
+    else
+    {
+        cout << "Error in multiplying matrix by vector" << endl;
+        exit(1);
+    }
 }
 
 
-void SummMatrix(vector<vector<double>> &G, const vector<vector<double>> M){
-    int n = G.size();
+vector<vector<double>> SummMatrix(vector<vector<double>> B, const vector<vector<double>> C){
+    vector<vector<double>> A;
+    int n = B.size();
+    A.resize(n);
+    for(auto & i : A){
+        i.resize(n);
+    }
+
     for(int i = 0; i < n; ++i){
         for(int j = 0; j < n; ++j){
-            G[i][j] += M[i][j];
+            A[i][j] = B[i][j] + C[i][j];
         }
     }
+    return A;
 }
 
 
@@ -204,7 +223,7 @@ vector<vector<double>> GlobalM(vector<double> koef, const vector<double >& x, co
 }
 
 
-vector<double> GlobalF(const vector<double >& x, const vector<double >& y, const vector<double >& z, const vector<vector<double>>& nvtr, vector<vector<double>> xyz){
+vector<double> GlobalB(const vector<double >& x, const vector<double >& y, const vector<double >& z, const vector<vector<double>>& nvtr, vector<vector<double>> xyz, int t){
     int countOfElements = (x.size() - 1) * (y.size() - 1) * (z.size() - 1);
     vector<double> F;
     F.resize(x.size()*y.size()*z.size());
@@ -214,7 +233,7 @@ vector<double> GlobalF(const vector<double >& x, const vector<double >& y, const
         vector<double> F1;
         F1.resize(8);
         for (int i = 0; i < 8; ++i) {
-            F1[i] = f(xyz[nvtr[k][i]][0], xyz[nvtr[k][i]][1], xyz[nvtr[k][i]][2]);
+            F1[i] = f(xyz[nvtr[k][i]][0], xyz[nvtr[k][i]][1], xyz[nvtr[k][i]][2], t);
         }
         F1 = MultMatrix(tmp, F1);
         for (int i = 0; i < 8; ++i) {
@@ -225,19 +244,17 @@ vector<double> GlobalF(const vector<double >& x, const vector<double >& y, const
 }
 
 
-void FirstBoundaryConditions(vector<vector<double>> &A, vector<double> &F, map<int, double> &kraev, const vector<vector<double>> &xyz)
+void FirstBoundaryConditions(vector<vector<double>> &A, vector<double> &F, const vector<vector<double>> &xyz, double t)
 {
     int size = A.size();
     for (int i = 0; i < size; ++i) {
         if (xyz[i][0] == xyz[0][0] || xyz[i][1] == xyz[0][1] || xyz[i][2] == xyz[0][2] || xyz[i][0] == xyz[size - 1][0] || xyz[i][1] == xyz[size - 1][1] || xyz[i][2] == xyz[size - 1][2]) {
-            if(kraev.find(i) != kraev.end()) {
-                F[i] = kraev[i];
-                for (int j = 0; j < size; ++j) {
-                    if (i == j)
-                        A[i][j] = 1;
-                    else
-                        A[i][j] = 0;
-                }
+            F[i] = u(xyz[i][0], xyz[i][1], xyz[i][2], t);
+            for (int j = 0; j < size; ++j) {
+                if (i == j)
+                    A[i][j] = 1;
+                else
+                    A[i][j] = 0;
             }
         }
     }
@@ -287,17 +304,72 @@ void luDecompose(vector<vector<double>> &A, vector<double> &F){
     }
 }
 
+vector<vector<double>> multiplyMatrixByConst(vector<vector<double>> &A, double c){
+    vector<vector<double>> tmp = A;
+    for(auto & i : tmp){
+        for(auto & j : i){
+            j *= c;
+        }
+    }
+    return tmp;
+}
+
+vector<double> summVectors(vector<double> &a, vector<double> &b){
+    if(a.size() == b.size()) {
+        vector<double> tmp;
+        tmp.resize(a.size());
+        for (int i = 0; i < a.size(); ++i){
+            tmp[i] = a[i] + b[i];
+        }
+        return tmp;
+    }
+    else{
+        cout << "Wrong size in summVectors" << endl;
+        exit(1);
+    }
+}
+
+vector<double> operator+(vector<double> a, vector<double> b){
+    if(a.size() == b.size()) {
+        for (int i = 0; i < a.size(); ++i) {
+            a[i] += b[i];
+        }
+        return a;
+    }
+    else
+    {
+        cout << "Wrong size in operator+" << a.size() << ' ' << b.size() << endl;
+        exit(1);
+    }
+}
+
+vector<double> operator-(vector<double> a, vector<double> b){
+    if(a.size() == b.size()) {
+        for (int i = 0; i < a.size(); ++i) {
+            a[i] -= b[i];
+        }
+        return a;
+    }
+    else
+    {
+        cout << "Wrong size in operator-" << endl;
+        exit(1);
+    }
+}
+
 
 int main() {
+    vector<double> x, y, z, lyambda, sigma, xhi, t;
+    vector<vector<double>> q;
+
     ifstream fin("x.txt");
-    vector<double> x, y, z, lyambda, gamma;
-    map<int, double> kraev;
     while (!fin.eof()) {
         double tmp;
         fin >> tmp;
         x.emplace_back(tmp);
     }
     fin.close();
+
     fin.open("y.txt");
     while (!fin.eof()) {
         double tmp;
@@ -305,6 +377,7 @@ int main() {
         y.emplace_back(tmp);
     }
     fin.close();
+
     fin.open("z.txt");
     while (!fin.eof()) {
         double tmp;
@@ -312,6 +385,7 @@ int main() {
         z.emplace_back(tmp);
     }
     fin.close();
+
     fin.open("lyambda.txt");
     while (!fin.eof()) {
         double tmp;
@@ -319,48 +393,96 @@ int main() {
         lyambda.push_back(tmp);
     }
     fin.close();
-    fin.open("gamma.txt");
+
+    fin.open("sigma.txt");
     while (!fin.eof()) {
         double tmp;
         fin >> tmp;
-        gamma.push_back(tmp);
+        sigma.push_back(tmp);
     }
     fin.close();
-    fin.open("kraev.txt");
-    if(fin.peek() != EOF) {
-        while (!fin.eof()) {
-            pair<int, double> tmp;
-            fin >> tmp.first >> tmp.second;
-            kraev.insert(tmp);
-        }
+
+    fin.open("xhi.txt");
+    while (!fin.eof()) {
+        double tmp;
+        fin >> tmp;
+        xhi.push_back(tmp);
+    }
+    fin.close();
+
+    fin.open("t.txt");
+    while (!fin.eof()) {
+        double tmp;
+        fin >> tmp;
+        t.emplace_back(tmp);
     }
     fin.close();
 
     int n = (x.size() - 1) * (y.size() - 1) * (z.size() - 1);
+
     if(lyambda.size() == 1){
         for(int i = 1; i < n; ++i){
             lyambda.push_back(lyambda[0]);
         }
     }
-    if(gamma.size() == 1){
+    if(sigma.size() == 1){
         for(int i = 1; i < n; ++i){
-            gamma.push_back(gamma[0]);
+            sigma.push_back(sigma[0]);
+        }
+    }
+    if(xhi.size() == 1){
+        for(int i = 1; i < n; ++i){
+            xhi.push_back(xhi[0]);
         }
     }
 
     std::vector<std::vector<double>> xyz = formxyz(x, y, z);
     std::vector<std::vector<double>> nvtr = formnvtr(x, y, z);
-    vector<vector<double>> G = GlobalG(lyambda, x, y, z, nvtr, xyz);
-    vector<vector<double>> M = GlobalM(gamma, x, y, z, nvtr, xyz);
-    SummMatrix(G, M);
-    vector<double> F = GlobalF(x, y, z, nvtr, xyz);
 
-    FirstBoundaryConditions(G, F, kraev, xyz);
+    q.resize(t.size());
+    int count = x.size() * y.size() * z.size();
+    for(auto & vect : q){
+        vect.resize(count);
+    }
 
-    luDecompose(G, F);
+    for(int k = 0; k < n; ++k) {
+        for (int i = 0; i < 8; ++i) {
+            q[0][nvtr[k][i]] = u(xyz[nvtr[k][i]][0], xyz[nvtr[k][i]][1], xyz[nvtr[k][i]][2], t[0]);
+            q[1][nvtr[k][i]] = u(xyz[nvtr[k][i]][0], xyz[nvtr[k][i]][1], xyz[nvtr[k][i]][2], t[1]);
+        }
+    }
 
-    for(auto &elem : F){
-        cout << fixed << elem << endl;
+    for(int i = 2; i < t.size(); ++i) {
+        double dt = 1. / (t[i] - t[i - 1]);
+        // Левая часть
+        vector<vector<double>> Mxhi = GlobalM(xhi, x, y, z, nvtr, xyz);
+        vector<vector<double>> Msigma = GlobalM(sigma, x, y, z, nvtr, xyz);
+        vector<vector<double>> A = SummMatrix(multiplyMatrixByConst(Mxhi, dt * dt), multiplyMatrixByConst(Msigma, dt / 2));
+        //-----------------------------------------------------
+        // Правая часть
+        vector<vector<double>> G = GlobalG(lyambda, x, y, z, nvtr, xyz);
+        vector<double> b = GlobalB(x, y, z, nvtr, xyz, t[i - 1]);
+
+        //FirstBoundaryConditions(A, b, xyz, t[i]);// учет первых краевых условий для формирования b
+            // Формирование полной правой части d
+            vector<double> d = b + MultMatrix(multiplyMatrixByConst(Mxhi, dt * dt * 2), q[i - 1]) -
+                                    MultMatrix(multiplyMatrixByConst(Mxhi, dt * dt), q[i - 2]) +
+                                    MultMatrix(multiplyMatrixByConst(Msigma, dt / 2), q[i - 2]) -
+                                    MultMatrix(G, q[i - 1]);
+            //-------------------------------------------------
+        //-----------------------------------------------------
+        // Решение
+        luDecompose(A, d);
+        //-----------------------------------------------------
+        // Вывод ответа на временном отрезке t[i]
+        cout << t[i] << ':' << endl;
+        for (auto &elem : d) {
+            cout << fixed << elem << endl;
+        }
+        cout << endl << endl;
+
+        q[i] = d;// Сохранение данных о решении на этом временном отрезке
+        //-----------------------------------------------------
     }
     return 0;
 }
